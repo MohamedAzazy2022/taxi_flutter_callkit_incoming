@@ -273,22 +273,60 @@ class CallkitIncomingBroadcastReceiver : BroadcastReceiver() {
     private fun getTaxiExtra(data: Bundle?, key: String): String {
         if (data == null) return ""
 
-        val direct = data.getString(key)
-        if (!direct.isNullOrBlank()) return direct
+        try {
+            val directString = data.getString(key)
+            if (!directString.isNullOrBlank()) return directString
+        } catch (_: Exception) {
+        }
 
-        val extraBundle = data.getBundle("extra")
-        val fromExtraBundle = extraBundle?.getString(key)
-        if (!fromExtraBundle.isNullOrBlank()) return fromExtraBundle
-
-        return try {
-            val extraAny = data.get("extra")
-            if (extraAny is Map<*, *>) {
-                extraAny[key]?.toString() ?: ""
-            } else {
-                ""
+        try {
+            val directAny = data.get(key)
+            if (directAny != null && directAny !is Bundle && directAny !is Map<*, *>) {
+                val value = directAny.toString()
+                if (value.isNotBlank()) return value
             }
         } catch (_: Exception) {
-            ""
         }
+
+        try {
+            val extraBundle = data.getBundle("extra")
+            val fromExtraBundle = extraBundle?.getString(key)
+            if (!fromExtraBundle.isNullOrBlank()) return fromExtraBundle
+        } catch (_: Exception) {
+        }
+
+        try {
+            val extraAny = data.get("extra")
+            if (extraAny is Map<*, *>) {
+                val value = extraAny[key]?.toString() ?: ""
+                if (value.isNotBlank()) return value
+            }
+        } catch (_: Exception) {
+        }
+
+        try {
+            for (bundleKey in data.keySet()) {
+                val value = data.get(bundleKey)
+
+                if (value is Bundle) {
+                    val nestedString = value.getString(key)
+                    if (!nestedString.isNullOrBlank()) return nestedString
+
+                    val nestedAny = value.get(key)
+                    if (nestedAny != null) {
+                        val nestedValue = nestedAny.toString()
+                        if (nestedValue.isNotBlank()) return nestedValue
+                    }
+                }
+
+                if (value is Map<*, *>) {
+                    val nestedValue = value[key]?.toString() ?: ""
+                    if (nestedValue.isNotBlank()) return nestedValue
+                }
+            }
+        } catch (_: Exception) {
+        }
+
+        return ""
     }
 }
