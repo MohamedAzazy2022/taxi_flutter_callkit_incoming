@@ -1,4 +1,4 @@
-﻿package com.hiennv.flutter_callkit_incoming
+package com.hiennv.flutter_callkit_incoming
 
 import android.annotation.SuppressLint
 import android.content.BroadcastReceiver
